@@ -1,0 +1,162 @@
+@font-face {
+    font-family: "ds-digi";
+    src: url(../fonts/ds_digital/DS-DIGII.TTF);
+}
+
+body {
+    margin: 0;
+    background-color: #F0FFFF;
+    padding-bottom: 5%;
+}
+
+.wrapper {
+    max-width: 1024px;
+    margin: auto;
+}
+
+header {
+    background: #5F9EA0;
+    padding: 1% 0;
+}
+
+header .wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#logo {
+    height: 100px;
+}
+
+.infos_text {
+    background: #5F9EA0;
+    color: #fff;
+    border: 2px outset black;
+    padding: 1%;
+    display: block;
+    width: fit-content;
+    margin: 18px auto;
+    border-left: 0.5px solid gray;
+    border-top: 0.5px solid gray;
+}
+
+.screen {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.commands {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #5F9EA0;
+    padding: 1%;
+}
+
+.output {
+    height: 300px;
+    border: 0.5px solid gray;
+    border-top: 2px inset black;
+    border-left: 2px inset black;
+    flex-grow: 1;
+    background-color: #fff;
+    overflow: scroll;
+}
+
+#detect_vidget {
+    display: grid;
+    grid-template-areas: "start_detect_btn choose_nb_threads detect_output";
+    grid-template-columns: 1fr 1fr 1fr;
+    justify-items: stretch;
+    align-items: stretch;
+}
+
+#detect_vidget>div {
+    border: 1px solid black;
+}
+
+#start_detect_btn {
+    grid-area: start_detect_btn;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#start_detect_btn button {
+    padding: 10% 4px;
+}
+
+#choose_nb_threads {
+    grid-area: choose_nb_threads;
+    display: flex;
+    flex-direction: column;
+}
+
+#choose_nb_threads select {
+    align-self: center;
+}
+
+#detect_output {
+    grid-area: detect_output;
+    padding: 1%;
+}
+
+#detect_vidget .output {
+    height: 100%;
+    width: 100%;
+    border-top: 0.5px solid gray;
+    border-left: 0.5px solid gray;
+}
+
+form {
+    display: none;
+}
+
+.wb-body {
+    overflow: hidden;
+}
+
+.roi {
+    border: 5px solid;
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#first_frame_win_img, .serie_frame {
+    visibility: hidden;
+    position: absolute;
+    display: contents;
+    height: 0;
+}
+
+.rois_selector_label {
+    font-family: ds-digi;
+    color: #00FF00;
+    font-size: 20px;
+}
+
+span.file_infos {
+    cursor: pointer;
+}
+
+#files_infos_wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+span.file_infos.active {
+    background: aqua;
+    color: white;
+}
+
+section#result_links {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+}

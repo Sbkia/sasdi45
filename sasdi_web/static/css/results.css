@@ -1,0 +1,10 @@
+#first_frame_img {
+    position: relative;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.preview_roi {
+    border: 1px solid;
+    position: absolute;
+}
