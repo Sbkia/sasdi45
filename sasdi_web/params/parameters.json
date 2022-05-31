@@ -1,0 +1,15 @@
+{
+"version": "4.5",
+"max_fps": "100",
+"audio_output": "0",
+"extensions": [
+"avi",
+"mp4",
+"wmv",
+"asf",
+"flv",
+"mpeg",
+"dav",
+"mov"
+]
+}
