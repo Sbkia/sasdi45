@@ -1,0 +1,87 @@
+{% extends "layout.html" %} {% block content %} {% load static %}
+<span class="infos_text"
+  >Select at least one video (accepted extensions: avi, mp4, wmv, asf, flv,
+  mpeg, dav, mov)</span
+>
+<form action="" id="crsf_form">{% csrf_token %}</form>
+<form action="" id="select_videos_form" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="hidden" name="selected_vid_index" id="selected_vid_index" />
+  <input type="hidden" name="dir_relativePath" id="dir_relativePath" />
+  <input
+    type="file"
+    name="videos_dir"
+    id="videos_dir_input"
+    class="files_selector"
+    webkitdirectory
+    data-val=""
+  />
+  <input
+    type="file"
+    name="videos_files"
+    id="videos_input"
+    class="files_selector"
+    accept="video/*"
+    multiple
+    data-val=""
+  />
+  <input type="hidden" name="type" id="type" />
+  <input type="hidden" name="rois" id="rois_input" />
+</form>
+<section id="select_vidget" class="screen">
+  <div class="commands">
+    <button id="sel_dir_btn">Select a directory</button>
+    <button id="sel_vids_btn">Select some video</button>
+    <button id="sel_serie_btn">Select a serie</button>
+    <button id="unsel_vids_btn">Unselect a video</button>
+    <button id="refresh_btn">Refresh</button>
+  </div>
+  <div class="output"></div>
+</section>
+<span class="infos_text"
+  >For each selection (or subserie), you can select 1 to 8 ROIs (one for each
+  animal zone)</span
+>
+<section id="roi_vidget" class="screen">
+  <div class="commands">
+    <button id="select_roi_btn" disabled>Select new ROI(s)</button>
+    <button id="select_series_roi_btn" disabled>Select subseries ROIs</button>
+  </div>
+  <div class="output"></div>
+</section>
+
+<span class="infos_text"
+  >Start motion on selected videos with selected ROIs</span
+>
+
+<section id="detect_vidget" class="screen">
+  <div id="start_detect_btn">
+    <button disabled>Start detection</button>
+    <div>
+      <input type="checkbox" name="admit_reanalise" id="admit_reanalise" />
+      Allow reanalyse
+    </div>
+  </div>
+  <div id="choose_nb_threads">
+    <span class="infos_text">Number of threads to use (total = 4)</span>
+    <select name="nb_threads" id="nb_threads">
+      <option value="auto">Auto</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
+    <span class="infos_text">auto = 3 (80%) with max thread/video</span>
+  </div>
+  <div id="detect_output">
+    <div class="output"></div>
+  </div>
+</section>
+<section id="result_links"></section>
+<img src="{% url 'get_first_frame' %}" id="first_frame_win_img" />
+<input type="hidden" value="{% url 'get_first_frame' %}" id="first_frame_url" />
+<input type="hidden" name="file_name" id="file_name" value="{{ file_name }}" />
+<input type="hidden" name="serie_subdir_names" id="serie_subdir_names" />
+<input type="hidden" name="nb_vids" id="nb_vids" />
+<input type="hidden" name="file_names" id="file_names" />
+{% endblock %}

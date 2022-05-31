@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/results.css' %}" />
+    <title>Result</title>
+</head>
+    <body>
+        <div>
+            <canvas id="dirac_audio_chart" width="300" height="100"></canvas>
+        </div>
+        <div>
+            <canvas id="dirac_power_chart" width="300" height="100"></canvas>
+        </div>
+        <canvas id="chart" width="300" height="100"></canvas>
+        <div
+        {% if serie_index < 0 %}
+        style="background-image: url({% url 'get_first_frame' %});"
+        {% else %}
+        style="background-image: url({% url 'get_firsts_serie_frame' %}?index={{ serie_index }});"
+        {% endif %}
+        id="first_frame_img"
+        ></div>
+        <input type="hidden" name="first_frame_src" id="first_frame_src" 
+        {% if serie_index < 0 %}
+            value="{% url 'get_first_frame' %}" />
+        {% else %}
+            value="{% url 'get_firsts_serie_frame' %}?index={{ serie_index }}" />
+        {% endif %}
+        <!--input type="hidden" name="labels" id="labels" value="{{ labels }}" /-->
+        <!--input type="hidden" name="datasets" id="datasets" value="{{ datasets }}" /-->
+        <input type="hidden" name="roi_coord" id="roi_coord" value="{{ roi_coord }}" />        
+        <!--input type="hidden" name="power_labels" id="power_labels" value="{{ power_labels }}" /-->        
+        <!--input type="hidden" name="power_datasets" id="power_datasets" value="{{ power_datasets }}" /-->        
+        <input
+        type="hidden"
+        name="numbers_cfg"
+        id="numbers_cfg"
+        value="{{ numbers_cfg }}"
+        />
+        <input type="hidden" name="filename" id="filename" value="{{ filename }}">
+        <input type="hidden" name="axe_audio_power_graph_upper_limit" id="axe_audio_power_graph_upper_limit" value="{{ axe_audio_power_graph_upper_limit }}">
+        <!--input type="hidden" name="audio_datasets" id="audio_datasets" value="{{ audio_datasets }}" -->
+        <input type="hidden" name="timemin_right_limit" id="timemin_right_limit" value="{{ timemin_right_limit }}">
+        <input type="hidden" name="index" id="index" value="{{ index }}">
+        <input type="hidden" name="serie_index" id="serie_index" value="{{ serie_index }}">
+        <!--input type="hidden" name="audio_labels" id="audio_labels" value="{{ audio_labels }}"-->
+        <input type="hidden" name="audio_max_value" id="audio_max_value" value="{{ audio_max_value }}">
+        <input type="hidden" name="audio_min_value" id="audio_min_value" value="{{ audio_min_value }}">
+        <input type="hidden" name="power_max_value" id="power_max_value" value="{{ power_max_value }}">
+        <input type="hidden" name="power_min_value" id="power_min_value" value="{{ power_min_value }}">
+        <script
+        src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+        crossorigin="anonymous"
+        ></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+        <!--script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script-->
+        <script src="{% static 'js/results.js' %}"></script>
+
+    </body>
+</html>
