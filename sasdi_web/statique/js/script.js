@@ -24,169 +24,72 @@ $(function () {
   file_names = $("#file_names");
 
   sel_dir_btn.on("click", function () {
+  """open the selection window"""
     videos_dir_input.click();
     input_file_back = videos_dir_input.clone();
     type.val("dir");
   });
   sel_serie_btn.on("click", function () {
+  """open the selection window"""
     input_file_back = videos_dir_input.clone();
     videos_dir_input.click();
     type.val("series");
   });
   sel_vids_btn.on("click", function () {
+  """open the selection window"""
     input_file_back = videos_input.clone();
     videos_input.click();
     type.val("files");
   });
 
-  function get_square(
-    x1,
-    y1,
-    x2,
-    y2,
-    addClass = "",
-    index = 0,
-    isSerie = false,
-    serie_index = 0
-  ) {
-    randomColor = Math.floor(Math.random() * 16777215).toString(16);
-    var top = y1;
-    var left = x1;
-    var width = x2 - x1;
-    var height = y2 - y1;
-    if (index == 0) {
-      rois = [];
-      try {
-        if (isSerie) {
-          series = JSON.parse(rois_input.val());
-          rois = series[serie_index];
-        } else {
-          rois = JSON.parse(rois_input.val());
-        }
-        index = rois.length + 1;
-      } catch (error) {
-        console.log(error);
-        index = 1;
+
+
+  function set_file_change_handler() {
+  /* take the selected files and call the put_videos function */
+    main_wrapper.on("change", "#videos_input", function () {
+      if (!$(this).val().length) {
+        $(this).get().files = input_file_back.get().files;
+        return;
       }
-    }
-    return (
-      "<div class='roi " +
-      addClass +
-      "' style='color: #" +
-      randomColor +
-      "; border-color: #" +
-      randomColor +
-      ";left:" +
-      left +
-      "px; top:" +
-      top +
-      "px; width: " +
-      width +
-      "px; height: " +
-      height +
-      "px;'; id=" +
-      randomColor +
-      " data-index=" +
-      index +
-      ">" +
-      index +
-      "</div>"
+      videos_dir_input.val("");
+      put_videos();
+    });
+    main_wrapper.on("change", "#videos_dir_input", function (e) {
+      type_data = type.val() == "series" ? "s" : "v";
+      if (!$(this).val().length) {
+        $(this).get().files = input_file_back.get().files;
+        return;
+      }
+      if (type_data == "s") {
+        let files = e.target.files;
+        let relativePaths = [];
+        for (let i = 0; i < files.length; i++) {
+          relativePaths[i] = files[i].webkitRelativePath;
+        }
+        dir_relativePath.val(JSON.stringify(relativePaths));
+      }
+      videos_input.val("");
+      put_videos(type_data);
+    });
+  }
+  set_file_change_handler();
+
+
+  function put_videos(type = "v") {
+  /*makes the link with url.py which calls api.py */
+    is_series = type == "s";
+    btn = is_series ? select_series_roi_btn : select_roi_btn;
+    select_series_roi_btn.prop("disabled", true);  //disable buttons
+    select_roi_btn.prop("disabled", true);         //disable buttons
+    output = $("#select_vidget .output");
+    roi_output = $("#roi_vidget .output");
+    output.html(
+      "ANALYSING SELECTED VIDEO(S), PLEASE WAIT ... <br>See terminal for more infos."
     );
+    send_video_request("/put-videos");
   }
 
-  function process_rois() {
-    $.post({
-      url: "/save-rois",
-      data: new FormData($("#select_videos_form")[0]),
-      processData: false,
-      contentType: false,
-    })
-      .fail(function (data) {
-        //console.log(data);
-      })
-      .done(function (data) {
-        roi_output.html(data.roi_text);
-        rois_input.val(JSON.stringify(data.rois));
-      });
-  }
-
-  function save_roi(index, ratio_image, isSerie = false, serie_index = 0) {
-    roi_div = $(".roi[data-index='" + index + "']");
-    width = roi_div.width();
-    height = roi_div.height();
-    parent = roi_div.parent();
-    x1 = parseFloat(roi_div.css("left").replace("px", ""));
-    y1 = parseFloat(roi_div.css("top").replace("px", ""));
-    x2 = x1 + width;
-    y2 = y1 + height;
-    if (x1 > x2) {
-      temp = x1;
-      x1 = x2;
-      x2 = temp;
-      temp = y1;
-      y1 = y2;
-      y2 = temp;
-    }
-    try {
-      if (isSerie) {
-        series = JSON.parse(rois_input.val());
-        rois = series[serie_index];
-      } else {
-        rois = JSON.parse(rois_input.val());
-      }
-      if (rois.length >= index) {
-        return;
-      }
-    } catch (error) {
-      rois = [];
-    }
-    if (isSerie) {
-      series[serie_index].push([
-        [parseInt(x1 / ratio_image), parseInt(y1 / ratio_image)],
-        [parseInt(x2 / ratio_image), parseInt(y2 / ratio_image)],
-      ]);
-      rois_input.val(JSON.stringify(series));
-    } else {
-      rois.push([
-        [parseInt(x1 / ratio_image), parseInt(y1 / ratio_image)],
-        [parseInt(x2 / ratio_image), parseInt(y2 / ratio_image)],
-      ]);
-      rois_input.val(JSON.stringify(rois));
-    }
-    rois_input.change();
-    roi_div.removeClass("unselected");
-  }
-
-  function discard_last_roi(isSerie = false, serie_index = 0) {
-    roi_div = $(".roi.unselected");
-    if (roi_div.length) {
-      roi_div.remove();
-      return;
-    } else {
-      try {
-        if (isSerie) {
-          series = JSON.parse(rois_input.val());
-          $(".roi")
-            .eq(series[serie_index].length - 1)
-            .remove();
-          series[serie_index].pop();
-          rois_input.val(JSON.stringify(series));
-        } else {
-          rois = JSON.parse(rois_input.val());
-          $(".roi")
-            .eq(rois.length - 1)
-            .remove();
-          rois.pop();
-          rois_input.val(JSON.stringify(rois));
-        }
-        rois_input.change();
-      } catch (error) {
-        return;
-      }
-    }
-  }
-
-  function send_video_request(url) {
+function send_video_request(url) {
     d = new Date();
     $.post({
       url: url,
@@ -221,48 +124,34 @@ $(function () {
       });
   }
 
-  function put_videos(type = "v") {
-    is_series = type == "s";
-    btn = is_series ? select_series_roi_btn : select_roi_btn;
-    select_series_roi_btn.prop("disabled", true);
-    select_roi_btn.prop("disabled", true);
+
+ unsel_vids_btn.on("click", function () {
+    send_video_request("/unselect");
+    $(".files_selector").val("");
+    rois_input.val("[]");
+    rois_input.change();
+  });
+
+  refresh_btn.on("click", function (data) {
+    refresh_btn.prop("disabled", true);
     output = $("#select_vidget .output");
     roi_output = $("#roi_vidget .output");
-    output.html(
-      "ANALYSING SELECTED VIDEO(S), PLEASE WAIT ... <br>See terminal for more infos."
-    );
-    send_video_request("/put-videos");
-  }
+    $.get("/refresh", function (data) {
+      output.html(data.output_test);
+      refresh_btn.prop("disabled", false);
+      roi_output.html(data.roi_text);
+    });
+  });
+});
 
-  function set_file_change_handler() {
-    main_wrapper.on("change", "#videos_input", function () {
-      if (!$(this).val().length) {
-        $(this).get().files = input_file_back.get().files;
-        return;
-      }
-      videos_dir_input.val("");
-      put_videos();
-    });
-    main_wrapper.on("change", "#videos_dir_input", function (e) {
-      type_data = type.val() == "series" ? "s" : "v";
-      if (!$(this).val().length) {
-        $(this).get().files = input_file_back.get().files;
-        return;
-      }
-      if (type_data == "s") {
-        let files = e.target.files;
-        let relativePaths = [];
-        for (let i = 0; i < files.length; i++) {
-          relativePaths[i] = files[i].webkitRelativePath;
-        }
-        dir_relativePath.val(JSON.stringify(relativePaths));
-      }
-      videos_input.val("");
-      put_videos(type_data);
-    });
-  }
-  set_file_change_handler();
-  var show_img_height;
+
+ select_roi_btn.on("click", function () {
+    show_rois_windows();
+  });
+
+
+
+var show_img_height;
   function show_rois_windows(isSerie = false, series_index = 0) {
     d = new Date();
     var img_scr;
@@ -411,18 +300,71 @@ $(function () {
   }
   var select_roi_img_winbox2 = null;
 
-  select_roi_btn.on("click", function () {
-    show_rois_windows();
+
+ // Selectionner ROIs pour les series
+  select_series_roi_btn.on("click", function () {
+    show_rois_windows(true);
   });
 
-  unsel_vids_btn.on("click", function () {
-    send_video_request("/unselect");
-    $(".files_selector").val("");
-    rois_input.val("[]");
-    rois_input.change();
-  });
 
-  $("#select_vidget .output").on("click", "span.file_infos", function () {
+
+  function get_square(
+    x1,
+    y1,
+    x2,
+    y2,
+    addClass = "",
+    index = 0,
+    isSerie = false,
+    serie_index = 0
+  ) {
+    randomColor = Math.floor(Math.random() * 16777215).toString(16);
+    var top = y1;
+    var left = x1;
+    var width = x2 - x1;
+    var height = y2 - y1;
+    if (index == 0) {
+      rois = [];
+      try {
+        if (isSerie) {
+          series = JSON.parse(rois_input.val());
+          rois = series[serie_index];
+        } else {
+          rois = JSON.parse(rois_input.val());
+        }
+        index = rois.length + 1;
+      } catch (error) {
+        console.log(error);
+        index = 1;
+      }
+    }
+    return (
+      "<div class='roi " +
+      addClass +
+      "' style='color: #" +
+      randomColor +
+      "; border-color: #" +
+      randomColor +
+      ";left:" +
+      left +
+      "px; top:" +
+      top +
+      "px; width: " +
+      width +
+      "px; height: " +
+      height +
+      "px;'; id=" +
+      randomColor +
+      " data-index=" +
+      index +
+      ">" +
+      index +
+      "</div>"
+    );
+  }
+
+
+ $("#select_vidget .output").on("click", "span.file_infos", function () {
     $("span.file_infos.active").removeClass("active");
     $(this).addClass("active");
     $("#selected_vid_index").val($(this).index());
@@ -432,24 +374,100 @@ $(function () {
     process_rois();
   });
 
-  // Selectionner ROIs pour les series
-  select_series_roi_btn.on("click", function () {
-    show_rois_windows(true);
-  });
-  var result_window = null;
-  function show_result_window(index, serie_index) {
-    if (result_window == null) {
-      result_window = new WinBox("View Results", {
-        url: "/results?index=" + index + "&serie_index=" + serie_index,
-        background: "#5F9EA0",
-        x: "center",
-        y: "center",
-        onclose: function () {
-          result_window = null;
-        },
+
+
+  function process_rois() {
+    $.post({
+      url: "/save-rois",
+      data: new FormData($("#select_videos_form")[0]),
+      processData: false,
+      contentType: false,
+    })
+      .fail(function (data) {
+        //console.log(data);
+      })
+      .done(function (data) {
+        roi_output.html(data.roi_text);
+        rois_input.val(JSON.stringify(data.rois));
       });
+  }
+
+  function save_roi(index, ratio_image, isSerie = false, serie_index = 0) {
+    roi_div = $(".roi[data-index='" + index + "']");
+    width = roi_div.width();
+    height = roi_div.height();
+    parent = roi_div.parent();
+    x1 = parseFloat(roi_div.css("left").replace("px", ""));
+    y1 = parseFloat(roi_div.css("top").replace("px", ""));
+    x2 = x1 + width;
+    y2 = y1 + height;
+    if (x1 > x2) {
+      temp = x1;
+      x1 = x2;
+      x2 = temp;
+      temp = y1;
+      y1 = y2;
+      y2 = temp;
+    }
+    try {
+      if (isSerie) {
+        series = JSON.parse(rois_input.val());
+        rois = series[serie_index];
+      } else {
+        rois = JSON.parse(rois_input.val());
+      }
+      if (rois.length >= index) {
+        return;
+      }
+    } catch (error) {
+      rois = [];
+    }
+    if (isSerie) {
+      series[serie_index].push([
+        [parseInt(x1 / ratio_image), parseInt(y1 / ratio_image)],
+        [parseInt(x2 / ratio_image), parseInt(y2 / ratio_image)],
+      ]);
+      rois_input.val(JSON.stringify(series));
+    } else {
+      rois.push([
+        [parseInt(x1 / ratio_image), parseInt(y1 / ratio_image)],
+        [parseInt(x2 / ratio_image), parseInt(y2 / ratio_image)],
+      ]);
+      rois_input.val(JSON.stringify(rois));
+    }
+    rois_input.change();
+    roi_div.removeClass("unselected");
+  }
+
+  function discard_last_roi(isSerie = false, serie_index = 0) {
+    roi_div = $(".roi.unselected");
+    if (roi_div.length) {
+      roi_div.remove();
+      return;
+    } else {
+      try {
+        if (isSerie) {
+          series = JSON.parse(rois_input.val());
+          $(".roi")
+            .eq(series[serie_index].length - 1)
+            .remove();
+          series[serie_index].pop();
+          rois_input.val(JSON.stringify(series));
+        } else {
+          rois = JSON.parse(rois_input.val());
+          $(".roi")
+            .eq(rois.length - 1)
+            .remove();
+          rois.pop();
+          rois_input.val(JSON.stringify(rois));
+        }
+        rois_input.change();
+      } catch (error) {
+        return;
+      }
     }
   }
+
 
   start_detect_btn.on("click", function () {
     $(this).prop("disabled", true);
@@ -525,14 +543,17 @@ $(function () {
       });
   });
 
-  refresh_btn.on("click", function (data) {
-    refresh_btn.prop("disabled", true);
-    output = $("#select_vidget .output");
-    roi_output = $("#roi_vidget .output");
-    $.get("/refresh", function (data) {
-      output.html(data.output_test);
-      refresh_btn.prop("disabled", false);
-      roi_output.html(data.roi_text);
-    });
-  });
-});
+var result_window = null;
+  function show_result_window(index, serie_index) {
+    if (result_window == null) {
+      result_window = new WinBox("View Results", {
+        url: "/results?index=" + index + "&serie_index=" + serie_index,
+        background: "#5F9EA0",
+        x: "center",
+        y: "center",
+        onclose: function () {
+          result_window = null;
+        },
+      });
+    }
+}
