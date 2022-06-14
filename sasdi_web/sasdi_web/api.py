@@ -30,34 +30,35 @@ six_html_space = '&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp'
 
 
 def putVideos(request):
+    """copies the videos to the server, creates the default ROIs, creates the image of the first frame of the video, and returns the data"""
     input_type = request.POST['type']
-    infos_serie_file_path = os.path.join(
+    infos_serie_file_path = os.path.join(         #retrieve the file
         BASE_DIR, "params", "infos_serie.json")
     roi_coord_file_path = os.path.join(
         BASE_DIR, "params", "roi_coord.json")
     send_rois = request.POST["rois"]
     try:
-        os.remove(infos_serie_file_path)
+        os.remove(infos_serie_file_path)       #delete old info
     except:
         pass
 
     try:
         # if not send_rois:
-        os.remove(roi_coord_file_path)
+        os.remove(roi_coord_file_path)       #delete old ROIs
     except:
         pass
 
-    if input_type == "series":
-        dir_relativePath = json.loads(request.POST['dir_relativePath'])
-        videos_data = select_serie(request, dir_relativePath)
+    if input_type == "series":         #checks the type of input: serial
+        dir_relativePath = json.loads(request.POST['dir_relativePath'])    #retrieves the videos and takes the info
+        videos_data = select_serie(request, dir_relativePath)              #(the videos, the number of videos, the name of the videos / the path, the default ROIs, the frame)
         result = videos_data["result"]
         nb_vids = videos_data["nb_vids"]
         file_names_list = videos_data["file_names_list"]
         roi_text = get_roi_text(roi_type="series")
         first_frame_aspect_ratio = ""
         file_name = ""
-    else:
-        videos_data = select_videos(request, input_type)
+    else:                                                            #input other than serial: some video or directory
+        videos_data = select_videos(request, input_type)             #get the same info
         result = videos_data["result"]
         nb_vids = videos_data["nb_vids"]
         file_names_list = videos_data["file_names_list"]
@@ -75,7 +76,7 @@ def putVideos(request):
             ROIs = roi_coord[0]
         except:
             ROIs = []
-    response_data = {
+    response_data = {es                          #return data in json response
         'result': result,
         'roi_text': roi_text,
         'first_frame_aspect_ratio': first_frame_aspect_ratio,
@@ -89,8 +90,9 @@ def putVideos(request):
 
 
 def save_rois(request):
-    send_rois = json.loads(request.POST["rois"])
-    input_type = request.POST['type']
+    """creates the boxes of ROIs"""
+    send_rois = json.loads(request.POST["rois"])   #Collect ROIs
+    input_type = request.POST['type']            #Collect type.
     if input_type == "series":
         boxes = []
         print("send_rois", send_rois)
@@ -106,7 +108,7 @@ def save_rois(request):
         boxes = [[]]
         for roi in send_rois:
             boxes[0].append([(roi[0][0], roi[0][1]), (roi[1][0], roi[1][1])])
-    save_roi_coord(boxes)
+    save_roi_coord(boxes)     #Iterates over the coordinates of the ROIs created by the user that the request contains then saves them in roi.coord.json.
     roi_coord, message = sf.read_roi_coord()
     roi_text = get_roi_text(roi_type="new")
     if input_type == "series":
@@ -117,22 +119,23 @@ def save_rois(request):
         'roi_text': roi_text,
         'rois': rois,
     }
-    return JsonResponse(response_data)
+    return JsonResponse(response_data)    #Returns the data to the client
 
 
 def save_roi_coord(boxes):
     """ INPUT sasdi directory, ROI coordinates,
         SAVE selected ROI coordinates to roi_coord.json
     """
-    with open(os.path.join(BASE_DIR, 'params', 'roi_coord.json'), 'w') as filewriter:
+    with open(os.path.join(BASE_DIR, 'params', 'roi_coord.json'), 'w') as filewriter:     #open the file rois.coord.json
         try:
-            filewriter.write(json.dumps(boxes, indent=""))
+            filewriter.write(json.dumps(boxes, indent=""))     #and we write the list of ROIs in it
         except IOError as json_error:
             print(f"Error writing roi_coord.json: {json_error}")
 
 
 def upload_file(f, path):
-    with open(path + '\\' + f.name, 'wb+') as destination:
+    """download the files, and upload"""
+    with open(path + '/' + f.name, 'wb+') as destination:   #Open a python file and copy the elements of the path inside
         for chunk in f.chunks():
             destination.write(chunk)
 
@@ -156,12 +159,12 @@ def select_videos(request, input_type):
     # self.listbox_files.delete(0, "end")
     # Get serie main directory full path
     main_fullpath = os.path.join(
-        BASE_DIR, 'videos', helpers.get_client_ip(request))
+        BASE_DIR, 'videos', helpers.get_client_ip(request))   #retrieves a file relative to the client's ip address
     path_exist = os.path.exists(main_fullpath)
     if(path_exist):
         shutil.rmtree(main_fullpath)
 
-    os.makedirs(main_fullpath)
+    os.makedirs(main_fullpath)    #creates a video/client ip address directory that will contain the videos
 
     video_files = []
 
@@ -184,7 +187,7 @@ def select_videos(request, input_type):
     # Refresh display in listbox
     save_first_frame(os.path.join(main_fullpath, list_videos[0][0]), os.path.join(
         main_fullpath, "first_frame.jpg"))
-    return get_video_output_text(list_videos, stats_videos, request)
+    return get_video_output_text(list_videos, stats_videos, request)   #Retrieves list and statistics of videos and returns method get_output_videos
 
 
 def select_serie(request, dir_relativePath):
@@ -197,12 +200,12 @@ def select_serie(request, dir_relativePath):
     """
 
     main_fullpath = os.path.join(
-        BASE_DIR, 'videos', helpers.get_client_ip(request))
+        BASE_DIR, 'videos', helpers.get_client_ip(request))      #retrieves a file relative to the client's ip address.
     path_exist = os.path.exists(main_fullpath)
     if(path_exist):
         shutil.rmtree(main_fullpath)
 
-    os.makedirs(main_fullpath)
+    os.makedirs(main_fullpath)      #creates a video/client ip address directory that will contain the videos
 
     create_series_directories(dir_relativePath, main_fullpath)
 
@@ -271,10 +274,10 @@ def select_serie(request, dir_relativePath):
 
 def get_video_output_text(list_videos, stats_videos, request):
     main_fullpath = os.path.join(
-        BASE_DIR, 'videos', helpers.get_client_ip(request))
+        BASE_DIR, 'videos', helpers.get_client_ip(request))      #Displays the videos that are contained in the folder created according to the ip address
     file_names_list = []
     result = ''
-    result += 'Selection : <br>'
+    result += 'Selection : <br>'     #messages create with character strings.
     result += two_html_space + \
         f'{stats_videos[0]} total video files with: <br>'
     result += six_html_space + f"{stats_videos[1]} to analyse (_), <br>"
@@ -305,7 +308,7 @@ def get_video_output_text(list_videos, stats_videos, request):
         "file_names_list": file_names_list,
     }
 
-    return ans
+    return ans    #Returns ans -> dictionary which contains the result of strings.
 
 
 def get_roi_text(roi_type):
@@ -357,12 +360,13 @@ def get_roi_text(roi_type):
 
 
 def save_first_frame(video_pathname, image_pathname):
+    """Receives a video as a parameter and retrieves the first image of the video."""
     print("video_pathname", video_pathname)
     print("image_pathname", image_pathname)
     success = False
     # Create image from first valid frame of video, start SelectROI
     count = 0
-    while not success and count < 1000:
+    while not success and count < 1000:    #We create a loop so that as long as we cannot capture the image, we replay the video
         try:
             # read first frame
             vidcap = cv2.VideoCapture(video_pathname)
@@ -376,34 +380,36 @@ def save_first_frame(video_pathname, image_pathname):
         count += 1
     if not success:
         return "No valid frame found"
-    cv2.imwrite(image_pathname, image)
+    cv2.imwrite(image_pathname, image)  #stores the image in the path which is set as a parameter
     return 'ok'
 
 
 def get_first_frame(request):
+    """Returns the first frame"""
     try:
         image_fullpath = os.path.join(
-            BASE_DIR, 'videos', helpers.get_client_ip(request), 'first_frame.jpg')
-        path = open(image_fullpath, 'rb')
+            BASE_DIR, 'videos', helpers.get_client_ip(request), 'first_frame.jpg')    #get the ip address to find the right image
+        path = open(image_fullpath, 'rb')    #open the requested image
         mime_type, _ = mimetypes.guess_type(image_fullpath)
-        response = HttpResponse(path, content_type=mime_type)
-        response['Content-Disposition'] = "attachment; filename=%s" % image_fullpath
+        response = HttpResponse(path, content_type=mime_type)  #Returns the image link to the client
+        response['Content-Disposition'] = "attachment; filename=%s" % image_fullpath   #Returns the first frame
         return response
     except:
         return HttpResponse("Not Found!", content_type='text/plain')
 
 
 def get_first_serie_frame(request):
+    """Returns the first frame for series"""
     serie_subdir_names = sf.read_infos_serie()
     index = int(request.GET["index"])
     full_path = os.path.join(
         BASE_DIR, 'videos', helpers.get_client_ip(request))
-    for subdir_index, subdir_name in enumerate(serie_subdir_names):
+    for subdir_index, subdir_name in enumerate(serie_subdir_names):    #Loops to retrieve all images.
         if subdir_index == index:
             image_fullpath = os.path.join(
                 full_path, subdir_name, 'first_frame.jpg')
     try:
-        path = open(image_fullpath, 'rb')
+        path = open(image_fullpath, 'rb')      #open the picture
         mime_type, _ = mimetypes.guess_type(image_fullpath)
         response = HttpResponse(path, content_type=mime_type)
         response['Content-Disposition'] = "attachment; filename=%s" % image_fullpath
@@ -413,6 +419,7 @@ def get_first_serie_frame(request):
 
 
 def create_series_directories(dir_relativePath, main_fullpath):
+    """Create a folder corresponding to the series"""
     for line in dir_relativePath:
         elts = line.split("/")
         del elts[0]
@@ -424,9 +431,10 @@ def create_series_directories(dir_relativePath, main_fullpath):
 
 
 def save_serie_files(dir_relativePath, files, main_fullpath):
-    result = {}
+    """backs up files in the system"""
+    result = {}     #Upload files (default on django)
     i = 0
-    for file in files:
+    for file in files:      #a loop where we browse the files
         elts = dir_relativePath[i].split("/")
         del elts[0]
         elts.pop()
@@ -435,7 +443,7 @@ def save_serie_files(dir_relativePath, files, main_fullpath):
         images_extensions = images_extensions_lower + extensions_upper
 
         dir_path = os.path.join(main_fullpath, *elts)
-        if file.name.endswith(images_extensions):
+        if file.name.endswith(images_extensions):    #If we have the right ectensions we save the files in the system
             upload_file(file, dir_path)
         i += 1
     return result
@@ -447,12 +455,12 @@ def unselect(request):
     index = int(request.POST["selected_vid_index"])
     type = request.POST["type"]
     if(type == 'files'):
-        files = request.FILES.getlist('videos_files')
+        files = request.FILES.getlist('videos_files')   #in the case of files
 
     if(type == 'dir'):
-        files = request.FILES.getlist('videos_dir')
+        files = request.FILES.getlist('videos_dir')    #in the case of a directory
     main_fullpath = os.path.join(
-        BASE_DIR, 'videos', helpers.get_client_ip(request))
+        BASE_DIR, 'videos', helpers.get_client_ip(request))      #get the path
     video_files = []
     for filename in os.listdir(main_fullpath):
         video_files.append(filename)
@@ -491,10 +499,11 @@ def unselect(request):
 
 
 def get_video_files_from_dir(files, main_fullpath):
+    """returns the lists which contains all the videos in itself"""
     video_files = []
     _, fps_limit, _, images_extensions_lower, extensions_upper = sf.read_parameters()
-    images_extensions = images_extensions_lower + extensions_upper
-    for f in files:
+    images_extensions = images_extensions_lower + extensions_upper         #recovers files only if they have the requested extensions that we add to the list
+    for f in files:        #a loop to check if the files exist otherwise they are downloaded into the system
         if f.name.endswith(images_extensions):
             if(not os.path.exists(os.path.join(main_fullpath, f.name))):
                 upload_file(f, main_fullpath)
@@ -506,15 +515,15 @@ def start_analysis(request):
     "Initialisation for videos analysis, started with BUTTON START"
     stop = 1
     # Get selected ROIs coordinates in roi_coord
-    roi_coord, message = sf.read_roi_coord()
+    roi_coord, message = sf.read_roi_coord()    #read your coordinates of the ROIs
     if message != "":
-        return JsonResponse({
+        return JsonResponse({         #If there is an error, an error message is returned.
             "stop": stop,
             "message": message,
         })
 
     # Get list of videos
-    list_videos, message = sf.read_list_videos()
+    list_videos, message = sf.read_list_videos()       #If there are no videos we send a message
     if message != "":
         print(message, content_type='text/plain')
 
@@ -527,7 +536,7 @@ def start_analysis(request):
     elif not roi_coord:
         return JsonResponse({
             "stop": stop,
-            "message": "WARNING: Please select at least one ROI",
+            "message": "WARNING: Please select at least one ROI",  #If there are no ROIs selected, a message is sent
         })
     else:
         nb_videos, list_videos_to_analyse = get_video_to_analyse(
@@ -536,19 +545,20 @@ def start_analysis(request):
         if not list_videos_to_analyse and list_videos:
             return JsonResponse({
                 "stop": stop,
-                "message": 'WARNING: All videos are already analysed, please tick "Allow reanalyse"',
+                "message": 'WARNING: All videos are already analysed, please tick "Allow reanalyse"',    #If the video has already been analyzed we send a message
             })
         else:
             # Update listbox
             return JsonResponse({
                 "stop": 0,
-                "message": f" Starting analysing {nb_videos} video(s)... <br>  See terminal for more informations",
+                "message": f" Starting analysing {nb_videos} video(s)... <br>  See terminal for more informations",   #If everything is good, we send an analysis message
             })
 
 
 def process_analysis(request):
-    roi_coord, _ = sf.read_roi_coord()
-    list_videos, _ = sf.read_list_videos()
+    """Share threads and show progress"""
+    roi_coord, _ = sf.read_roi_coord()   #get the ROIs
+    list_videos, _ = sf.read_list_videos()  #retrieve videos
     nb_videos, list_videos_to_analyse = get_video_to_analyse(
         request, list_videos, roi_coord)
     choice_number_process = request.POST["nb_threads"]
@@ -579,7 +589,7 @@ def process_analysis(request):
     message = "<br><br>"
     message += two_html_space + \
         f" ANALYSIS OF {nb_videos} VIDEO(S) COMPLETED IN {sf.format_duration(int(fullprocessduration))} <br>"
-    message += "<br><br>"
+    message += "<br><br>"   #Once the analysis is done, we look at how long it took and we display it
     return JsonResponse({
         "message": message,
     })
